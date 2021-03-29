@@ -1,12 +1,41 @@
 from tkinter import *
+import mysql.connector
+
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="Benylin",
+  password="4zpHMhP5H5A*",
+  database="calculator"
+)
+
+mycursor = mydb.cursor()
+
+
 
 root = Tk()
 root.title("Calculator")
 
 FirstNumber = 0
 Signal = None
-Answer = "Unused"
+Answer = "Unused" 
 i = 0
+
+def SaveToDB(ResultIs, sign):
+    sql = "INSERT INTO FinalAnswer (Result, SignUsed) VALUES (%s, %s)"
+    val = (ResultIs, sign)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+def ResetDB():
+    mycursor.execute("TRUNCATE TABLE FinalAnswer")
+    mydb.close()
+
+def LoadLastFromDB():
+    global Result
+    mycursor.execute("SELECT Result FROM `FinalAnswer` WHERE id=(SELECT MAX(id) FROM `FinalAnswer`)");
+    Result = mycursor.fetchone()
+    Number1.delete(0, END)
+    Number1.insert(0, Result)
 
 Number1 = Entry(root, width = 45, borderwidth = 0)
 Number1.grid(row = 0,column=0, columnspan = 3, padx = 10, pady = 10)
@@ -18,24 +47,28 @@ def Add():
     Result = float(FirstNumber) + float(Number2.get())
     Number2.delete(0, END)
     Number2.insert(0, Result)
+    SaveToDB(Result, "+")
 
 def Minus():
     global Result
     Result = float(FirstNumber) - float(Number2.get())
     Number2.delete(0, END)
     Number2.insert(0, Result)
+    SaveToDB(Result, "-")
 
 def Multiply():
     global Result
     Result = float(FirstNumber) * float(Number2.get())
     Number2.delete(0, END)
     Number2.insert(0, Result)
+    SaveToDB(Result, "x")
 
 def Divide():
     global Result
     Result = float(FirstNumber) / float(Number2.get())
     Number2.delete(0, END)
     Number2.insert(0, Result)
+    SaveToDB(Result, "/")
 
 def button_click(number):
 
@@ -114,6 +147,10 @@ MinusButton = Button(root, text="-", padx = 39, pady = 20, bg="#272829", fg="whi
 MultiButton = Button(root, text="X", padx = 39, pady = 20, bg="#272829", fg="white", command=lambda: button_operation("X"))
 DivButton = Button(root, text="/", padx = 39, pady = 20, bg="#272829", fg="white", command=lambda: button_operation("/"))
 
+ResetDB = Button(root, text="Reset DB", padx = 39, pady = 20, bg="#272829", fg="white", command= ResetDB)
+LoadDB = Button(root, text="Load From DB", padx = 39, pady = 20, bg="#272829", fg="white", command= LoadLastFromDB)
+
+
 button7.grid(row = 2, column = 0)
 button8.grid(row = 2, column = 1)
 button9.grid(row = 2, column = 2)
@@ -132,5 +169,8 @@ PlusButton.grid(row = 2, column = 4)
 MinusButton.grid(row = 3, column = 4)
 MultiButton.grid(row = 4, column = 4)
 DivButton.grid(row = 5, column = 4)
+
+ResetDB.grid(row = 8, column = 1)
+LoadDB.grid(row = 8, column = 2)
 
 root.mainloop()
